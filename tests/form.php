@@ -21,9 +21,9 @@ class FormTest extends TestCase
     {
         // backend
         $form = LoginForm::load($_POST);
-        if ($form->validate()) {
-            $result = $form->handle();
-            $error = $result->isSuccess() ? null : $result->getMessage();
+        $errors = $form->submit();
+        if (empty($errors)) {
+            // success
         }
 
         // frontend
