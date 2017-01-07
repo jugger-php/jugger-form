@@ -11,7 +11,7 @@ use jugger\model\validator\RequireValidator;
 
 class LoginForm extends Form
 {
-    public static function getSchema(Model $model): array
+    public static function getSchema(Model $model = null): array
     {
         return [
             new TextField([
