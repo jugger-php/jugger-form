@@ -18,26 +18,6 @@ abstract class Form extends Model
         return $form;
     }
 
-    public static function getLabel(string $name): string
-    {
-        return static::getLabels()[$name] ?? $name;
-    }
-
-    public static function getLabels(): array
-    {
-        return [];
-    }
-
-    public static function getHint(string $name): string
-    {
-        return static::getHints()[$name] ?? "";
-    }
-
-    public static function getHints(): array
-    {
-        return [];
-    }
-
     public function submit(): array
     {
         if (!$this->validate()) {
