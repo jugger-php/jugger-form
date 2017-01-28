@@ -3,15 +3,21 @@
 use PHPUnit\Framework\TestCase;
 
 use jugger\form\Form;
-use jugger\form\Renderer;
-use jugger\model\Model;
+use jugger\form\FormRenderer;
+use jugger\form\FieldRenderer;
 use jugger\model\field\TextField;
 use jugger\model\validator\RepeatValidator;
 use jugger\model\validator\RequireValidator;
 
 class LoginForm extends Form
 {
-    public static function getSchema(Model $model = null): array
+    protected function init()
+    {
+        parent::init();
+        $this->getField('password_repeat')->addValidator(new RepeatValidator("password", $this));
+    }
+
+    public static function getSchema(): array
     {
         return [
             new TextField([
@@ -30,7 +36,6 @@ class LoginForm extends Form
                 'name' => 'password_repeat',
                 'validators' => [
                     new RequireValidator(),
-                    new RepeatValidator("password", $model),
                 ],
             ]),
         ];
@@ -68,9 +73,9 @@ class FormTest extends TestCase
         // filling
         $form = LoginForm::load($_POST);
         $errors = $form->submit();
-        $this->assertEquals($errors['username'], RequireValidator::class);
-        $this->assertEquals($errors['password'], RequireValidator::class);
-        $this->assertEquals($errors['password_repeat'], RequireValidator::class);
+        $this->assertEquals($errors['username'], "Поле 'username': обязательно для заполнения");
+        $this->assertEquals($errors['password'], "Поле 'Password label': обязательно для заполнения");
+        $this->assertEquals($errors['password_repeat'], "Поле 'Password repeat label': обязательно для заполнения");
 
         // repeat validator
         $form = new LoginForm();
@@ -80,114 +85,47 @@ class FormTest extends TestCase
         $errors = $form->submit();
         $this->assertFalse(isset($errors['username']));
         $this->assertFalse(isset($errors['password']));
-        $this->assertEquals($errors['password_repeat'], RepeatValidator::class);
+        $this->assertEquals($errors['password_repeat'], "Поле 'Password repeat label': значение должно совпадать с полем 'Password label'");
     }
 
     public function testRender()
     {
-        $form = LoginForm::load([]);
-        $form->submit();
-        $renderer = new Renderer($form);
+        $model = LoginForm::load([]);
+        $model->submit();
 
-        /*
-         * label
-         */
+        $form = new FormRenderer($model);
         $this->assertEquals(
-            $renderer->field('username')->renderLabel(),
-            "<label class='form-field__label' for='username-id'>username</label>"
+            $form->field('username')->render(),
+            "<div class='form-group'><label for='LoginForm-username-id'>username</label><input id='LoginForm-username-id' type='text'><div class='error-block'>Поле 'username': обязательно для заполнения</div></div>"
         );
         $this->assertEquals(
-            $renderer->field('password')->renderLabel(),
-            "<label class='form-field__label' for='password-id'>Password label</label>"
+            $form->field('password')->render(),
+            "<div class='form-group'><label for='LoginForm-password-id'>Password label</label><input id='LoginForm-password-id' type='text'><div class='error-block'>Поле 'Password label': обязательно для заполнения</div></div>"
         );
         $this->assertEquals(
-            $renderer->field('password')->label('New label', ['class' => 'form-control-label'])->renderLabel(),
-            "<label class='form-control-label' for='password-id'>New label</label>"
+            $form->field('password_repeat')->render(),
+            "<div class='form-group'><label for='LoginForm-password_repeat-id'>Password repeat label</label><input id='LoginForm-password_repeat-id' type='text'><div class='error-block'>Поле 'Password repeat label': обязательно для заполнения</div><div class='help-block'>Password and Password repeat must be equals</div></div>"
         );
 
-        /*
-         * hint
-         */
-        $this->assertEquals(
-            $renderer->field('username')->renderHint(),
-            ""
-        );
-        $this->assertEquals(
-            $renderer->field('password_repeat')->renderHint(),
-            "<small class='form-field__hint'>Password and Password repeat must be equals</small>"
-        );
-        $this->assertEquals(
-            $renderer->field('password_repeat')->hint('New hint', ['class' => 'form-text'])->renderHint(),
-            "<small class='form-text'>New hint</small>"
-        );
+        // fileds
 
-        /*
-         * input
-         */
         $this->assertEquals(
-            $renderer->field('username')->renderInput(),
-            "<input type='text' id='username-id' class='form-field__input' name='username'>"
-        );
-        $types = ['text', 'email', 'password', 'checkbox', 'radio'];
-        foreach ($types as $type) {
-            $this->assertEquals(
-                $renderer->field('username')->$type()->renderInput(),
-                "<input type='{$type}' id='username-id' class='form-field__input' name='username'>"
-            );
-        }
-        $this->assertEquals(
-            $renderer->field('username')->textarea()->renderInput(),
-            "<textarea id='username-id' class='form-field__input' name='username'></textarea>"
+            $form->field('username')->renderField(),
+            "<input id='LoginForm-username-id' type='text'>"
         );
         $this->assertEquals(
-            $renderer->field('username')->checkboxList(['value1', 'value2', 'value3'])->renderInput(),
-            "<div id='username-id' class='form-field__input'><label><input type='checkbox' name='username[]' value='value1'> value1</label><label><input type='checkbox' name='username[]' value='value2'> value2</label><label><input type='checkbox' name='username[]' value='value3'> value3</label></div>"
+            $form->field('username')->input('email')->renderField(),
+            "<input id='LoginForm-username-id' type='email'>"
         );
         $this->assertEquals(
-            $renderer->field('username')->radioList(['value1', 'value2', 'value3'], ['class' => 'form-group'])->renderInput(),
-            "<div id='username-id' class='form-group'><label><input type='radio' name='username' value='value1'> value1</label><label><input type='radio' name='username' value='value2'> value2</label><label><input type='radio' name='username' value='value3'> value3</label></div>"
-        );
-
-        /*
-         * input with value
-         */
-        $form->username = 'value1';
-        $this->assertEquals(
-            $renderer->field('username')->renderInput(),
-            "<input type='text' id='username-id' class='form-field__input' name='username' value='value1'>"
+            $form->field('username')->text(['class' => 'form-control'])->renderField(),
+            "<input class='form-control' id='LoginForm-username-id' type='text'>"
         );
         $this->assertEquals(
-            $renderer->field('username')->textarea()->renderInput(),
-            "<textarea id='username-id' class='form-field__input' name='username'>value1</textarea>"
-        );
-        $this->assertEquals(
-            $renderer->field('username')->checkboxList(['value1', 'value2'])->renderInput(),
-            "<div id='username-id' class='form-field__input'><label><input type='checkbox' name='username[]' value='value1' checked> value1</label><label><input type='checkbox' name='username[]' value='value2'> value2</label></div>"
-        );
-
-        /*
-         * error
-         */
-        $form->username = "value";
-        $form->submit();
-        $this->assertEquals(
-            $renderer->field('username')->renderError(),
-            ""
-        );
-        
-        $form->username = null;
-        $form->submit();
-        $this->assertEquals(
-            $renderer->field('username')->renderError(),
-            "<div class='form-field__error'>jugger\\model\\validator\\RequireValidator</div>"
-        );
-
-        /*
-         * all
-         */
-        $this->assertEquals(
-            $renderer->field('username')->render(),
-            "<div class='form-field'><label class='form-field__label' for='username-id'>username</label><input type='text' id='username-id' class='form-field__input' name='username'><div class='form-field__error'>jugger\\model\\validator\\RequireValidator</div></div>"
+            $form->field('username')->callback(function(FieldRenderer $field){
+                return "name: {$field->name}; value: {$field->value}";
+            })->renderField(),
+            "name: username; value: "
         );
     }
 }
