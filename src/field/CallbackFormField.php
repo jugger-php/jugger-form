@@ -8,6 +8,7 @@ class CallbackFormField extends BaseFormField
 
     public function renderValue(array $options = [])
     {
-        return ($this->callback)($this->value);
+        $options = array_merge($this->valueOptions, $options);
+        return ($this->callback)($this->value, $options);
     }
 }
