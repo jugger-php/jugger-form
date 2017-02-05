@@ -72,6 +72,34 @@ class FormTest extends TestCase
         return $model;
     }
 
+    public function testEasyForm()
+    {
+        $model = $this->getModel();
+        $form = new Form($model);
+
+        ob_start();
+
+        echo $form->renderBegin();
+        echo $form->text('username');
+        echo $form->password('password');
+        echo $form->password('password_repeat');
+        echo $form->renderEnd();
+
+        $content = ob_get_clean();
+        $this->assertEquals(
+            $content,
+            "<form>".
+            "<label for='username-id'>username</label>".
+            "<input id='username-id' name='username' value='login' type='text'>".
+            "<label for='password-id'>Password label</label>".
+            "<input id='password-id' name='password' value='password' type='password'>".
+            "<label for='password_repeat-id'>Password repeat label</label>".
+            "<input id='password_repeat-id' name='password_repeat' value='password' type='password'>".
+            "<div class='hint-block'>Password and Password repeat must be equals</div>".
+            "</form>"
+        );
+    }
+
     public function testBuilder()
     {
         $model = $this->getModel();
