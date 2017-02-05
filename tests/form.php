@@ -3,13 +3,16 @@
 use PHPUnit\Framework\TestCase;
 
 use jugger\form\Form;
-use jugger\form\FormRenderer;
-use jugger\form\FieldRenderer;
+use jugger\form\field\InputFormField;
+use jugger\form\field\PasswordFormField;
+use jugger\form\field\CallbackFormField;
+
+use jugger\model\Model;
 use jugger\model\field\TextField;
 use jugger\model\validator\RepeatValidator;
 use jugger\model\validator\RequireValidator;
 
-class LoginForm extends Form
+class LoginForm extends Model
 {
     protected function init()
     {
@@ -59,73 +62,106 @@ class LoginForm extends Form
 
 class FormTest extends TestCase
 {
-    public function testBase()
+    public function getModel()
     {
-        // empty
-        $form = LoginForm::load([
+        $model = new LoginForm([
             'username' => 'login',
             'password' => 'password',
             'password_repeat' => 'password',
         ]);
-        $errors = $form->submit();
-        $this->assertEmpty($errors);
-
-        // filling
-        $form = LoginForm::load($_POST);
-        $errors = $form->submit();
-        $this->assertEquals($errors['username'], "Поле 'username': обязательно для заполнения");
-        $this->assertEquals($errors['password'], "Поле 'Password label': обязательно для заполнения");
-        $this->assertEquals($errors['password_repeat'], "Поле 'Password repeat label': обязательно для заполнения");
-
-        // repeat validator
-        $form = new LoginForm();
-        $form->username = 'login';
-        $form->password = 'password';
-        $form->password_repeat = 'password repeat';
-        $errors = $form->submit();
-        $this->assertFalse(isset($errors['username']));
-        $this->assertFalse(isset($errors['password']));
-        $this->assertEquals($errors['password_repeat'], "Поле 'Password repeat label': значение должно совпадать с полем 'Password label'");
+        return $model;
     }
 
-    public function testRender()
+    public function testBuilder()
     {
-        $model = LoginForm::load([]);
-        $model->submit();
+        $model = $this->getModel();
+        $content = Form::renderNow($model, [
+            'options' => [
+                'action' => '/',
+                'method' => 'post',
+                'class' => 'form',
+            ],
+            'fields' => [
+                new InputFormField('username', [
+                    'type' => 'text',
+                    'label' => 'My label',
+                ]),
+                new PasswordFormField('password', [
+                    'error' => 'her',
+                ]),
+                new CallbackFormField('password_repeat', [
+                    'callback' => function($value) {
+                        return "password_repeat: {$value}";
+                    },
+                ]),
+            ],
+        ]);
 
-        $form = new FormRenderer($model);
         $this->assertEquals(
-            $form->field('username')->render(),
-            "<div class='form-group'><label for='LoginForm-username-id'>username</label><input id='LoginForm-username-id' type='text'><div class='error-block'>Поле 'username': обязательно для заполнения</div></div>"
+            $content,
+            join([
+                "<form action='/' method='post' class='form'>",
+                    // username
+                    "<label for='username-id'>My label</label>",
+                    "<input id='username-id' name='username' value='login' type='text'>",
+                    // password
+                    "<label for='password-id'>Password label</label>",
+                    "<input id='password-id' name='password' value='password' type='password'>",
+                    "<div class='error-block'>her</div>",
+                    // password repeat
+                    "<label for='password_repeat-id'>Password repeat label</label>",
+                    "password_repeat: password",
+                    "<div class='hint-block'>Password and Password repeat must be equals</div>",
+                "</form>",
+            ])
         );
-        $this->assertEquals(
-            $form->field('password')->render(),
-            "<div class='form-group'><label for='LoginForm-password-id'>Password label</label><input id='LoginForm-password-id' type='text'><div class='error-block'>Поле 'Password label': обязательно для заполнения</div></div>"
-        );
-        $this->assertEquals(
-            $form->field('password_repeat')->render(),
-            "<div class='form-group'><label for='LoginForm-password_repeat-id'>Password repeat label</label><input id='LoginForm-password_repeat-id' type='text'><div class='error-block'>Поле 'Password repeat label': обязательно для заполнения</div><div class='help-block'>Password and Password repeat must be equals</div></div>"
-        );
+    }
 
-        // fileds
+    public function testObject()
+    {
+        $model = $this->getModel();
+
+        $form = new Form($model, [
+            'action' => '/',
+            'method' => 'post',
+            'class' => 'form',
+        ]);
+
+        ob_start();
+
+        echo $form->renderBegin();
+        echo $form->text('username', [
+            'label' => 'My label',
+        ]);
+        echo $form->password('password', [
+            'error' => 'her',
+        ]);
+        echo $form->callback('password_repeat', [
+            'callback' => function($value) {
+                return "password_repeat: {$value}";
+            },
+        ]);
+        echo $form->renderEnd();
+
+        $content = ob_get_clean();
 
         $this->assertEquals(
-            $form->field('username')->renderField(),
-            "<input id='LoginForm-username-id' type='text'>"
-        );
-        $this->assertEquals(
-            $form->field('username')->input('email')->renderField(),
-            "<input id='LoginForm-username-id' type='email'>"
-        );
-        $this->assertEquals(
-            $form->field('username')->text(['class' => 'form-control'])->renderField(),
-            "<input class='form-control' id='LoginForm-username-id' type='text'>"
-        );
-        $this->assertEquals(
-            $form->field('username')->callback(function(FieldRenderer $field){
-                return "name: {$field->name}; value: {$field->value}";
-            })->renderField(),
-            "name: username; value: "
+            $content,
+            join([
+                "<form action='/' method='post' class='form'>",
+                    // username
+                    "<label for='username-id'>My label</label>",
+                    "<input id='username-id' name='username' value='login' type='text'>",
+                    // password
+                    "<label for='password-id'>Password label</label>",
+                    "<input id='password-id' name='password' value='password' type='password'>",
+                    "<div class='error-block'>her</div>",
+                    // password repeat
+                    "<label for='password_repeat-id'>Password repeat label</label>",
+                    "password_repeat: password",
+                    "<div class='hint-block'>Password and Password repeat must be equals</div>",
+                "</form>",
+            ])
         );
     }
 }
