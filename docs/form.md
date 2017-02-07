@@ -96,15 +96,15 @@ $form = new Form($model);
 <form>
     <div class='form-group'>
         <label for='username-id'>username</label>
-        <input id='username-id' name='username' value='login' type='text'>
+        <input id='username-id' name='username' type='text'>
     </div>
     <div class='form-group'>
         <label for='password-id'>Password label</label>
-        <input id='password-id' name='password' value='password' type='password'>
+        <input id='password-id' name='password' type='password'>
     </div>
     <div class='form-group'>
         <label for='password_repeat-id'>Password repeat label</label>
-        <input id='password_repeat-id' name='password_repeat' value='password' type='password'>
+        <input id='password_repeat-id' name='password_repeat' type='password'>
         <div class='hint-block'>Password and Password repeat must be equals</div>
     </div>
     <div class='form-group'>
