@@ -89,16 +89,16 @@ $input->hintOptions = [
     ],
 ];
 
-$input->renderLabel()); // <label for='name-id' aria-hidden='true'>My label</label>
-$input->renderValue()); // <input id='name-id' name='name' value='My value' class='form-value' type='text'>
-$input->renderError()); // <div selected>My error</div>
-$input->renderHint());  // <div data-id='123'>My hint</div>
+$input->renderLabel(); // <label for='name-id' aria-hidden='true'>My label</label>
+$input->renderValue(); // <input id='name-id' name='name' value='My value' class='form-value' type='text'>
+$input->renderError(); // <div selected>My error</div>
+$input->renderHint();  // <div data-id='123'>My hint</div>
 ```
 
 Параметры с постфиксом `*options` формируеются также, как и для HTML тегов.
 [Подробнее HTML тэги](https://github.com/jugger-php/jugger-html/blob/master/docs/README.md).
 
-Все поля отличаются между собой только выводом значения `renderValue`, поэтому ниже будет рассматриваться только данные метод.
+Все поля отличаются между собой только выводом значения `renderValue`, поэтому ниже будет рассматриваться только данные методы.
 
 ## InputFormField
 
