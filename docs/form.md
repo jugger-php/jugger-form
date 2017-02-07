@@ -78,10 +78,10 @@ $form = new Form($model);
     <?= $form->text('username') ?>
 </div>
 <div class='form-group'>
-    <?= $form->text('password') ?>
+    <?= $form->password('password') ?>
 </div>
 <div class='form-group'>
-    <?= $form->text('password_repeat') ?>
+    <?= $form->password('password_repeat') ?>
 </div>
 <div class='form-group'>
     <button type='submit'>Вход</button>
