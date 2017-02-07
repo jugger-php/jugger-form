@@ -31,10 +31,7 @@ class MyWidget extends Widget
 
     public function run()
     {
-        return "
-name: {$this->name};
-value: {$this->value};
-";
+        return "name: {$this->name}; value: {$this->value};";
     }
 };
 
@@ -76,6 +73,42 @@ class FieldTest extends TestCase
         $this->assertEquals($input->hint, "My hint");
 
         return $input;
+    }
+
+    public function testOptions()
+    {
+        $input = new InputFormField('name', [
+            "label" => "My label",
+            'labelOptions' => [
+                'aria-hidden' => 'true',
+            ],
+            "error" => "My error",
+            'errorOptions' => [
+                'selected' => true,
+            ],
+            "value" => "My value",
+            'valueOptions' => [
+                'class' => 'form-value',
+            ],
+        ]);
+        $input->hint = "My hint";
+        $input->hintOptions = [
+            'data' => [
+                'id' => '123',
+            ],
+        ];
+
+        $content = "<label for='name-id' aria-hidden='true'>My label</label>";
+        $this->assertEquals($content, $input->renderLabel());
+
+        $content = "<input id='name-id' name='name' value='My value' class='form-value' type='text'>";
+        $this->assertEquals($content, $input->renderValue());
+
+        $content = "<div selected>My error</div>";
+        $this->assertEquals($content, $input->renderError());
+
+        $content = "<div data-id='123'>My hint</div>";
+        $this->assertEquals($content, $input->renderHint());
     }
 
     public function testEmptyRender()
@@ -467,11 +500,11 @@ class FieldTest extends TestCase
     {
         $field = new CallbackFormField('field', [
             'callback' => function($value) {
-                return "slkfnskjfhkrgekrg230tgoi34nkdf";
+                return "<span>{$value}</span>";
             },
         ]);
 
-        $content = "slkfnskjfhkrgekrg230tgoi34nkdf";
+        $content = "<span></span>";
         $this->assertEquals($field->render(), $content);
     }
 
@@ -482,10 +515,7 @@ class FieldTest extends TestCase
             'class' => MyWidget::class,
         ]);
 
-        $content = "
-name: field;
-value: 456;
-";
+        $content = "name: field; value: 456;";
         $this->assertEquals($field->render(), $content);
     }
 }
